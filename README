@@ -1,0 +1,35 @@
+ESTRTURA DAS PASTAS
+saneamento-vulnerabilidade-es/
+├── data/                   # Onde a mágica (e os dados) acontece
+│   ├── raw/                # Arquivos originais (CSV, Excel) do SNIS/IJSN
+│   └── processed/          # Dados limpos e otimizados (em .parquet)
+├── notebooks/              # Experimentos e Análises Exploratórias (EDA)
+│   ├── 01_limpeza_dados.ipynb
+│   ├── 02_analise_estatistica.ipynb
+│   └── 03_clusterizacao.ipynb
+├── src/                    # Código fonte modular (Python scripts)
+│   ├── data_utils.py       # Funções para carregar e limpar dados
+│   └── model_utils.py      # Funções para os testes estatísticos e ML
+├── app/                    # Pasta dedicada ao Dashboard (MVP)
+│   └── main.py             # Script principal do Streamlit
+├── docs/                   # Relatórios exigidos pelo edital
+│   ├── entrega_01/         # Escopo e Metodologia
+│   └── imagens/            # Gráficos exportados para o relatório
+├── .gitignore              # Arquivo para ignorar arquivos desnecessários
+├── README.md               # A "capa" do projeto (Documentação Principal)
+└── requirements.txt        # Lista de bibliotecas (pandas, streamlit, etc.)
+
+FUTURAS MUDANÇAS
+df_final (limpo)
+    │
+    ├── 1. ANÁLISE ESTATÍSTICA
+    │       ├── Verificar distribuição dos dados (Shapiro-Wilk)
+    │       ├── Correlação Spearman (saneamento ↔ saúde)
+    │       └── Teste de hipótese (Kruskal-Wallis)
+    │
+    └── 2. CLUSTERIZAÇÃO (K-Means)
+            ├── Selecionar features de risco
+            ├── Normalizar os dados
+            ├── Escolher número de clusters (método do cotovelo)
+            ├── Treinar e rotular os clusters
+            └── Perfilar as zonas de vulnerabilidade

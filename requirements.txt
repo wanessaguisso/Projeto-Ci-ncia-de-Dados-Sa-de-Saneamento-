@@ -1,0 +1,12 @@
+basedosdados
+folium
+geopandas
+matplotlib
+numpy
+pandas
+pandas-gbq
+papermill
+pyarrow
+scikit-learn
+scipy
+seaborn
