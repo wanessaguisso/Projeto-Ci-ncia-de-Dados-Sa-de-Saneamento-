@@ -1,54 +1,23 @@
 import streamlit as st
-import folium
-from folium.plugins import HeatMap
-import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
+import plotly.express as px
+from components.charts import COLORS
 
-def render_dynamic_ranking(df_filtered):
-    """
-    Renderiza o Ranking Dinâmico das top cidades mais críticas.
-    """
-    st.subheader("📌 Ranking de Criticidade (Top Municípios)")
+def render_map(df_filtered):
+    st.subheader("🗺️ Mapa Geográfico (Distribuição)")
     
-    if df_filtered.empty or 'RISCO_SOCIAL_FINAL' not in df_filtered.columns:
-        st.warning("Sem dados para exibir o ranking.")
-        return
+    if 'lat' in df_filtered.columns and 'lon' in df_filtered.columns:
+        # Mapa com intensidade (Scatter Mapbox)
+        fig = px.scatter_mapbox(df_filtered, lat="lat", lon="lon", hover_name="nome_municipio" if 'nome_municipio' in df_filtered.columns else "id_municipio",
+                                hover_data=["Taxa_Morbidade_100k_Hab", "vazio_sanitario"],
+                                color="RISCO_SOCIAL_FINAL" if 'RISCO_SOCIAL_FINAL' in df_filtered.columns else "Taxa_Morbidade_100k_Hab",
+                                size="Taxa_Morbidade_100k_Hab",
+                                color_continuous_scale="Reds", zoom=6, height=500,
+                                title="Mapa de Intensidade de Doenças e Risco")
         
-    df_rank = df_filtered.sort_values(by='RISCO_SOCIAL_FINAL', ascending=False).head(10)
-    
-    fig, ax = plt.subplots(figsize=(8, 5))
-    
-    # Paleta de cores com base no risco
-    sns.barplot(
-        data=df_rank,
-        x='RISCO_SOCIAL_FINAL',
-        y='id_municipio',
-        orient='h',
-        palette="Reds_r",
-        ax=ax,
-        order=df_rank['id_municipio']
-    )
-    
-    ax.set_xlabel("Risco Social Final (0 a 100)", fontsize=11)
-    ax.set_ylabel("ID Município", fontsize=11)
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    
-    st.pyplot(fig)
-
-
-def render_map_placeholder(df_filtered):
-    """
-    Renderiza o mapa geoespacial ou um aviso caso não haja coordenadas.
-    """
-    st.subheader("🗺️ Mapa Geoespacial (Zonas Críticas)")
-    st.markdown("Aqui será exibido o heatmap de vulnerabilidade. Como o dataset atual baseia-se apenas no código IBGE, precisaríamos enriquecer com latitudes/longitudes ou um arquivo `.geojson` do Espírito Santo para visualização coroplética.")
-    
-    st.info("💡 Sugestão: Baixar a malha municipal do ES via IBGE ou geocodificar as cidades para habilitar a camada Folium aqui.")
-    
-    # Se tivéssemos lat/lon, seria algo assim:
-    # m = folium.Map(location=[-19.18, -40.30], zoom_start=7, tiles='CartoDB dark_matter')
-    # heat_data = [[row['lat'], row['lon'], row['RISCO_SOCIAL_FINAL']] for index, row in df_filtered.iterrows()]
-    # HeatMap(heat_data).add_to(m)
-    # st_folium(m, width=700, height=500)
+        # Plotly mapbox configuration (using open street map to avoid token requirement)
+        fig.update_layout(mapbox_style="open-street-map")
+        fig.update_layout(margin={"r":0,"t":40,"l":0,"b":0})
+        
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.warning("O dataset atual não contém as colunas `lat` e `lon` necessárias para renderizar o mapa interativo.")

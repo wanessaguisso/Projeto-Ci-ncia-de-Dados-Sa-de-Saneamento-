@@ -2,72 +2,74 @@ import streamlit as st
 import warnings
 from data_loader import load_data
 from components.sidebar import render_sidebar
-from components.charts import render_kpis, render_scatter_regression, render_correlation_matrix
-from components.maps import render_dynamic_ranking, render_map_placeholder
-from components.simulator import render_simulator
+from components.kpis import render_kpis, render_insights
+from components.charts import (
+    render_correlation_heatmap, render_scatter_regression, render_pairplot,
+    render_time_series, render_comparisons, render_advanced_relations, render_distributions
+)
+from components.maps import render_map
+from components.models_panel import (
+    render_linear_regression, render_random_forest, render_arima, render_kmeans
+)
 
-# Ignorar FutureWarnings do Pandas/Seaborn
+# Ignorar FutureWarnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 st.set_page_config(
-    page_title="Saneamento & Saúde ES",
+    page_title="Saneamento & Saúde Analytics",
     page_icon="💧",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Estética WOW / CSS Customizado
+# Estética Light e Elegante
 st.markdown("""
 <style>
-    /* Estilos principais */
     .stApp {
-        background-color: #0e1117;
-        color: #fafafa;
+        background-color: #F8F9FB;
+        color: #2E2E2E;
     }
-    
-    /* Títulos com gradiente */
-    h1, h2, h3 {
-        background: -webkit-linear-gradient(45deg, #48cae4, #0077b6);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+    h1, h2, h3, h4, h5, h6 {
+        color: #6C63FF;
         font-family: 'Inter', sans-serif;
     }
-    
-    /* Cartões de KPI */
     div[data-testid="metric-container"] {
-        background-color: #1a1c23;
-        border-radius: 10px;
-        padding: 15px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        border: 1px solid #2d303a;
-        transition: transform 0.2s ease-in-out;
+        background-color: #FFFFFF;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        border-left: 5px solid #00BFA6;
     }
-    div[data-testid="metric-container"]:hover {
-        transform: translateY(-5px);
-        border-color: #48cae4;
+    div.stTabs [data-baseweb="tab-list"] {
+        gap: 20px;
+    }
+    div.stTabs [data-baseweb="tab"] {
+        background-color: #FFFFFF;
+        border-radius: 8px 8px 0 0;
+        padding: 10px 20px;
+        box-shadow: 0 -2px 5px rgba(0,0,0,0.02);
+    }
+    div.stTabs [aria-selected="true"] {
+        border-bottom: 3px solid #6C63FF !important;
+        font-weight: bold;
     }
 </style>
 """, unsafe_allow_html=True)
 
 def main():
-    st.title("💧 Inteligência em Saneamento e Saúde (ES)")
-    st.markdown("Plataforma analítica para correlação entre infraestrutura de água/esgoto e incidência de doenças de veiculação hídrica.")
+    st.title("💧 Saneamento & Saúde Analytics")
+    st.markdown("Plataforma interativa para correlação preditiva entre infraestrutura sanitária e saúde pública.")
     
     # 1. Carregar Dados
-    with st.spinner('Carregando e processando base de dados...'):
+    with st.spinner('Carregando base de dados...'):
         df = load_data()
         
     if df.empty:
         st.stop()
         
-    # Calcular e adicionar anomalias
-    from src.model_utils import detectar_outliers_saneamento_saude
-    df = detectar_outliers_saneamento_saude(df)
-        
-    # 2. Renderizar Sidebar e obter Filtros
+    # 2. Sidebar e Filtros
     ano_sel, zona_sel, mun_sel = render_sidebar(df)
     
-    # 3. Aplicar Filtros
     df_filtered = df.copy()
     if ano_sel:
         df_filtered = df_filtered[df_filtered['ano'] == ano_sel]
@@ -76,24 +78,57 @@ def main():
     if mun_sel and mun_sel != "Todos":
         df_filtered = df_filtered[df_filtered['id_municipio'].astype(str) == mun_sel]
         
-    # 4. Renderizar KPIs (Topo)
-    st.markdown("### Visão Geral do Cenário Filtrado")
+    # 3. Topo: KPIs e Insights
     render_kpis(df_filtered)
+    render_insights(df_filtered)
     st.markdown("---")
     
-    # 5. Layout em Colunas (Análises)
-    col1, col2 = st.columns([3, 2])
+    # 4. Meio: Visualizações Avançadas em Abas
+    st.header("📊 Painel Analítico Interativo")
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+        "Correlações", "Série Temporal", "Comparações", "Geográfico", "Avançado", "Distribuição"
+    ])
     
-    with col1:
+    with tab1:
+        colA, colB = st.columns([1, 1])
+        with colA:
+            render_correlation_heatmap(df_filtered)
+        with colB:
+            render_pairplot(df_filtered)
         render_scatter_regression(df_filtered)
-        render_simulator(df_filtered)
         
-    with col2:
-        render_map_placeholder(df_filtered)
-        st.markdown("<br>", unsafe_allow_html=True)
-        render_dynamic_ranking(df_filtered)
-        st.markdown("<br>", unsafe_allow_html=True)
-        render_correlation_matrix(df_filtered)
+    with tab2:
+        render_time_series(df_filtered)
+        
+    with tab3:
+        render_comparisons(df_filtered)
+        
+    with tab4:
+        render_map(df_filtered)
+        
+    with tab5:
+        render_advanced_relations(df_filtered)
+        
+    with tab6:
+        render_distributions(df_filtered)
+        
+    st.markdown("---")
+    
+    # 5. Inferior: Modelos Preditivos
+    st.header("🤖 Modelos Preditivos e Machine Learning")
+    mtab1, mtab2, mtab3, mtab4 = st.tabs([
+        "Regressão Linear", "Random Forest", "Série Temporal (ARIMA)", "Clusterização (K-Means)"
+    ])
+    
+    with mtab1:
+        render_linear_regression(df_filtered)
+    with mtab2:
+        render_random_forest(df_filtered)
+    with mtab3:
+        # ARIMA funciona melhor com série histórica completa
+        render_arima(df)
+    with mtab4:
+        render_kmeans(df_filtered)
 
 if __name__ == "__main__":
     main()

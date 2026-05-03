@@ -10,3 +10,6 @@ pyarrow
 scikit-learn
 scipy
 seaborn
+
+plotly
+statsmodels

@@ -10,7 +10,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
 
 from src.data_utils import carregar_snis, limpar_df_gold, integrar_saude_tabnet, calcular_risco_social_final
-from src.model_utils import classificar_qualidade_populacao, preparar_clusterizacao, treinar_kmeans, rotular_clusters
+from src.model_utils import preparar_clusterizacao, treinar_kmeans, rotular_clusters
 
 DATA_DIR = PROJECT_ROOT / "data"
 PROCESSED_DIR = DATA_DIR / "processed"
