@@ -14,8 +14,6 @@ import scipy.stats as stats
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
-from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import IsolationForest
 
 
 def teste_shapiro(
@@ -106,16 +104,29 @@ def teste_kruskal_wallis_por_tercis(
 		labels = ['Baixo', 'Medio', 'Alto']
 
 	df_hip = df[[coluna_saneamento, coluna_saude]].dropna().copy()
-	df_hip['grupo_saneamento'] = pd.qcut(
-		df_hip[coluna_saneamento],
-		q=q,
-		labels=labels
-	)
+	if df_hip.empty:
+		df_hip['grupo_saneamento'] = pd.Series(dtype='category')
+		return np.nan, np.nan, df_hip
 
+	try:
+		df_hip['grupo_saneamento'] = pd.qcut(
+			df_hip[coluna_saneamento],
+			q=q,
+			labels=labels,
+			duplicates='drop'
+		)
+	except ValueError:
+		df_hip['grupo_saneamento'] = pd.Series(dtype='category')
+		return np.nan, np.nan, df_hip
+
+	labels_validos = list(df_hip['grupo_saneamento'].cat.categories)
 	grupos = [
 		df_hip[df_hip['grupo_saneamento'] == label][coluna_saude]
-		for label in labels
+		for label in labels_validos
 	]
+	grupos = [grupo for grupo in grupos if len(grupo) > 0]
+	if len(grupos) < 2:
+		return np.nan, np.nan, df_hip
 
 	stat, p_valor = stats.kruskal(*grupos)
 	return stat, p_valor, df_hip
@@ -300,77 +311,3 @@ def plotar_zonas_vulnerabilidade(
 	plt.tight_layout()
 
 	return fig, ax
-
-
-def regressao_linear_saneamento_saude(
-	df: pd.DataFrame, 
-	coluna_x: str = 'vazio_sanitario', 
-	coluna_y: str = 'Taxa_Morbidade_100k_Hab'
-):
-	"""
-	Treina um modelo de regressão linear simples para estimar morbidade com base no déficit sanitário.
-	Retorna o modelo, o R², o coeficiente (impacto) e o intercepto.
-	"""
-	df_reg = df[[coluna_x, coluna_y]].dropna()
-	if df_reg.empty:
-		return None, np.nan, np.nan, np.nan
-
-	X = df_reg[[coluna_x]].values
-	y = df_reg[coluna_y].values
-
-	modelo = LinearRegression()
-	modelo.fit(X, y)
-
-	r2 = modelo.score(X, y)
-	coef = modelo.coef_[0]
-	intercept = modelo.intercept_
-
-	return modelo, r2, coef, intercept
-
-
-def detectar_outliers_saneamento_saude(
-	df: pd.DataFrame, 
-	coluna_x: str = 'vazio_sanitario', 
-	coluna_y: str = 'Taxa_Morbidade_100k_Hab',
-	contamination: float = 0.05
-):
-	"""
-	Usa Isolation Forest para identificar municípios anômalos (outliers).
-	"""
-	df_out = df.copy()
-	# Preencher naN com média para não dropar linhas na identificação de outliers
-	X = df_out[[coluna_x, coluna_y]].fillna(df_out[[coluna_x, coluna_y]].mean())
-
-	iso = IsolationForest(contamination=contamination, random_state=42)
-	df_out['outlier'] = iso.fit_predict(X)
-	df_out['outlier'] = df_out['outlier'].map({1: False, -1: True})
-
-	return df_out
-
-
-def simular_cenario_melhoria_saneamento(
-	df: pd.DataFrame,
-	modelo: LinearRegression,
-	melhoria_percentual: float = 20.0,
-	coluna_x: str = 'vazio_sanitario'
-):
-	"""
-	Simula um cenário onde o vazio sanitário diminui em X%.
-	Estima a nova taxa de morbidade com base no modelo de regressão.
-	"""
-	df_sim = df.copy()
-	
-	fator = 1.0 - (melhoria_percentual / 100.0)
-	df_sim['vazio_sanitario_simulado'] = df_sim[coluna_x] * fator
-
-	# Previsão da morbidade
-	X_sim = df_sim[['vazio_sanitario_simulado']].fillna(0).values
-	y_sim_pred = modelo.predict(X_sim)
-	
-	# Evitar morbidade negativa
-	y_sim_pred = np.clip(y_sim_pred, a_min=0, a_max=None)
-	
-	df_sim['Morbidade_Simulada_100k'] = y_sim_pred
-	df_sim['Reducao_Morbidade_Abs'] = df_sim['Taxa_Morbidade_100k_Hab'] - df_sim['Morbidade_Simulada_100k']
-	
-	return df_sim

@@ -22,7 +22,7 @@ def run_notebook(input_path: Path, output_path: Path) -> None:
     pm.execute_notebook(
         input_path=str(input_path),
         output_path=str(output_path),
-        kernel_name=None,
+        kernel_name='python3',
         log_output=True,
     )
 

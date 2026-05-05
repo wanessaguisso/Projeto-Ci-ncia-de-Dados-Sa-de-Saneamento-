@@ -94,8 +94,9 @@ def preparar_populacao_referencia(df_base: pd.DataFrame) -> pd.DataFrame:
 
     # Nula = ainda nula após todos os fallbacks (para interpolação)
     df_base['populacao_ref_era_nula'] = df_base['populacao_ref'].isna()
+    df_base['populacao_ref'] = pd.to_numeric(df_base['populacao_ref'], errors='coerce')
     df_base['populacao_ref'] = df_base.groupby('id_municipio')['populacao_ref'].transform(
-        lambda x: x.interpolate(method='linear', limit=2, limit_area='inside')
+        lambda x: x.astype('float64').interpolate(method='linear', limit=2, limit_area='inside')
     )
 
     return df_base
@@ -295,7 +296,9 @@ def processar_saude(arquivo: str, nome_metrica: str) -> pd.DataFrame:
         sep=';',
         encoding='iso-8859-1',
         header=None,
-        dtype=str
+        dtype=str,
+        names=list(range(40)),
+        engine='python'
     )
 
     col0 = df_raw.iloc[:, 0].fillna('').astype(str).str.strip()
