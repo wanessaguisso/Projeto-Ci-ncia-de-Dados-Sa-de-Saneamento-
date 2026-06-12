@@ -1,7 +1,9 @@
 basedosdados
 folium
 geopandas
+ipykernel
 matplotlib
+nbconvert
 numpy
 pandas
 pandas-gbq
@@ -10,6 +12,13 @@ pyarrow
 scikit-learn
 scipy
 seaborn
-
-plotly
-statsmodels
+streamlit>=1.32.0
+plotly>=5.18.0
+pandas>=2.0.0
+numpy>=1.24.0
+pyarrow>=14.0.0
+folium>=0.16.0
+streamlit-folium>=0.18.0
+scipy>=1.11.0
+scikit-learn>=1.3.0
+statsmodels>=0.14.0

@@ -1,45 +1,49 @@
-"""Run project notebooks in order.
-
-Usage:
-  python run_notebooks.py
-"""
+"""Execute project notebooks in order."""
 
 from __future__ import annotations
 
+import subprocess
+import sys
 from pathlib import Path
 
-import papermill as pm
+
+ROOT = Path(__file__).resolve().parent
+NOTEBOOKS = ROOT / "notebooks"
+OUTPUT = NOTEBOOKS / "_executed"
+
+NOTEBOOK_LIST = [
+    "01_limpeza_dados.ipynb",
+    "02_analise_estatistica.ipynb",
+    "03_clusterizacao.ipynb",
+]
 
 
-PROJECT_ROOT = Path(__file__).resolve().parent
-NOTEBOOKS_DIR = PROJECT_ROOT / "notebooks"
-OUTPUT_DIR = PROJECT_ROOT / "notebooks" / "_executed"
-
-
-def run_notebook(input_path: Path, output_path: Path) -> None:
-    """Execute a notebook and save the executed copy."""
+def execute_notebook(name: str) -> None:
+    output_path = OUTPUT / name
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    pm.execute_notebook(
-        input_path=str(input_path),
-        output_path=str(output_path),
-        kernel_name='python3',
-        log_output=True,
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "nbconvert",
+            "--to",
+            "notebook",
+            "--execute",
+            "--output",
+            output_path.name,
+            "--output-dir",
+            str(output_path.parent),
+            str(NOTEBOOKS / name),
+        ],
+        check=True,
     )
 
 
 def main() -> None:
-    notebooks = [
-        "01_limpeza_dados.ipynb",
-        "02_analise_estatistica.ipynb",
-        "03_clusterizacao.ipynb",
-    ]
-
-    for nb_name in notebooks:
-        input_path = NOTEBOOKS_DIR / nb_name
-        output_path = OUTPUT_DIR / nb_name
-        print(f"▶ Executando: {input_path}")
-        run_notebook(input_path, output_path)
-        print(f"✅ Salvo: {output_path}")
+    for name in NOTEBOOK_LIST:
+        print(f"▶ Executando: {NOTEBOOKS / name}")
+        execute_notebook(name)
+        print(f"✅ Salvo: {OUTPUT / name}")
 
 
 if __name__ == "__main__":
